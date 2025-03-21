@@ -67,68 +67,89 @@ void print_menu() {
 
 void print_registers() {
     for (const auto& [reg, value] : registers) {
-        spdlog::info("Register {}: {}", to_char(reg), value);
+        cout << "Register " << to_char(reg) << ": " << value << endl;
     }
 }
 
 void execute(string const cmd) {
-    // validate command size
-    if (cmd.size() == 0) {
-        spdlog::error("Empty command");
+    if (cmd.empty()) {
+        cout << "Error: Empty command" << endl;
         return;
     }
-    // lower annd get first char of command
-    char const cmd_ch = std::tolower(cmd[0]);
+
+    char cmd_ch = std::tolower(cmd[0]);
 
     switch (cmd_ch) {
         case 'a':
-            spdlog::error("cmd={} not implemented", cmd_ch);
-            break;
         case 'b':
-            spdlog::error("cmd={} not implemented", cmd_ch);
-            break;
         case 'c':
-            spdlog::error("cmd={} not implemented", cmd_ch);
+        case 'd': {
+            double value;
+            cout << "Enter a number for register " << cmd_ch << ": ";
+            if (!(cin >> value)) {
+                cout << "Error: Invalid input" << endl;
+                cin.clear();
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');  // Flush input buffer
+                return;
+            }
+            registers[to_reg_name(cmd_ch)] = value;
+            cout << "Register " << cmd_ch << " set to " << value << endl;
             break;
-        case 'd':
-            spdlog::error("cmd={} not implemented", cmd_ch);
-            break;
+        }
         case '+':
-            spdlog::error("cmd={} not implemented", cmd_ch);
-            break;
         case '-':
-            spdlog::error("cmd={} not implemented", cmd_ch);
-            break;
         case '*':
-            spdlog::error("cmd={} not implemented", cmd_ch);
+        case '/': {
+            char reg1, reg2;
+            cout << "Enter two registers (e.g., A B): ";
+            if (!(cin >> reg1 >> reg2)) {
+                cout << "Error: Invalid input" << endl;
+                cin.clear();
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');  // Flush input buffer
+                return;
+            }
+            if (!is_register(reg1) || !is_register(reg2)) {
+                cout << "Error: Invalid registers" << endl;
+                return;
+            }
+            double val1 = registers[to_reg_name(reg1)];
+            double val2 = registers[to_reg_name(reg2)];
+
+            if (cmd_ch == '/' && val2 == 0) {
+                cout << "Error: Division by zero" << endl;
+                return;
+            }
+
+            double result = (cmd_ch == '+') ? (val1 + val2)
+                           : (cmd_ch == '-') ? (val1 - val2)
+                           : (cmd_ch == '*') ? (val1 * val2)
+                           : (val1 / val2);
+            cout << reg1 << " " << cmd_ch << " " << reg2 << " = " << result << endl;
             break;
-        case '/':
-            spdlog::error("cmd={} not implemented", cmd_ch);
-            break;
+        }
         case '1':
-            spdlog::error("cmd={} not implemented", cmd_ch);
-            break;
         case '2':
-            spdlog::error("cmd={} not implemented", cmd_ch);
-            break;
         case '3':
-            spdlog::error("cmd={} not implemented", cmd_ch);
+        case '4': {
+            reg_name reg = static_cast<reg_name>(cmd_ch - '1');
+            registers[reg] = 0.0;
+            cout << "Cleared register " << to_char(reg) << endl;
             break;
-        case '4':
-            spdlog::error("cmd={} not implemented", cmd_ch);
-            break;
+        }
         case 'm':
-            print_menu();//spdlog::error("cmd={} not implemented", cmd_ch);
+            print_menu();
             break;
         case 'p':
-            print_registers();//spdlog::error("cmd={} not implemented", cmd_ch);
+            print_registers();
             break;
         case 'q':
-            break;
+            return;
         default:
-            spdlog::error("{} is an unknown command", cmd_ch);
+            cout << "Error: Unknown command '" << cmd_ch << "'" << endl;
             break;
     }
+
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');  // Ensure input buffer is cleared
 }
 
 // start the calculator
@@ -139,7 +160,6 @@ void start() {
     while (cmd != "q") {
         cout << "Enter a command: ";
         cin >> cmd;
-        spdlog::debug("cmd={}", cmd);
         execute(cmd);
     }
 }
@@ -148,8 +168,6 @@ void start() {
 using namespace claudia_calc;
 
 int main() {
-    spdlog::set_level(spdlog::level::debug);
     start();
-
     return 0;
 }
